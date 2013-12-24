@@ -168,7 +168,7 @@ void MRG::run(MRG_REAL dur, const char *in_file, MRG_REAL V_fe, MRG_REAL V_appli
 		}
 
 		// debug
-		printf("Iteration %d: t = %e s\n", i, t1);
+		printf("Iteration %d: t = %e ms\n", i, t1);
 	}
 
 	CVodeFree(&cv_ode_mem);

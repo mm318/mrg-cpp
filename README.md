@@ -1,6 +1,13 @@
 # McIntyre, Richardson, and Grill Axon Model
 
-Reimplementation of the axon model from McIntyre, Richardson, and Grill (2002) in C++, using https://code.google.com/p/mrg-matlab/ as the reference implementation (MATLAB).
+Reimplementation of the axon model from McIntyre, Richardson, and Grill (2002) in C++.
+
+
+## Usage
+
+mrg_axon_model <axon file> <V_fe (mV)> <V_applied (mV)> <duration (ms)> <stim start (ms)> <stim end (ms)>
+
+The axon file is in the format (tab separated): <x (m)>	<y (m)>	<z (m)>	<Ve_pulse (V)>
 
 
 ## History
