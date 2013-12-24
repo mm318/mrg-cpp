@@ -5,9 +5,9 @@ Reimplementation of the axon model from McIntyre, Richardson, and Grill (2002) i
 
 ## Usage
 
-mrg_axon_model <axon file> <V_fe (mV)> <V_applied (mV)> <duration (ms)> <stim start (ms)> <stim end (ms)>
+mrg_axon_model &lt;axon file&gt; &lt;V_fe (mV)&gt; &lt;V_applied (mV)&gt; &lt;duration (ms)&gt; &lt;stim start (ms)&gt; &lt;stim end (ms)&gt;
 
-The axon file is in the format (tab separated): <x (m)>	<y (m)>	<z (m)>	<Ve_pulse (V)>
+The axon file is in the format (tab separated): &lt;x (m)&gt; &lt;y (m)&gt; &lt;z (m)&gt; &lt;Ve_pulse (V)&gt;
 
 
 ## History
