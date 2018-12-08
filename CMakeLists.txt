@@ -57,7 +57,7 @@ target_include_directories(${APP_NAME} PRIVATE src/libs/armadillo-9.200.5)
 # =========================================================================
 # ============================== SUNDIALS =================================
 # =========================================================================
-add_subdirectory(src/libs/sundials-4.0.0)
+add_subdirectory(src/libs/sundials-4.0.0 "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/sundials")
 target_include_directories(${APP_NAME} PRIVATE ${sundials_SOURCE_DIR}/include)
 target_link_libraries(${APP_NAME}
                         sundials_cvode_static

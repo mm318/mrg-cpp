@@ -15,6 +15,19 @@
 # Top level CMakeLists.txt for SUNDIALS (for cmake build system)
 # ---------------------------------------------------------------
 
+# ---------------------------------------------------------------
+# Initial commands
+# ---------------------------------------------------------------
+
+# Require a fairly recent cmake version
+cmake_minimum_required(VERSION 3.1.3)
+
+# Libraries linked via full path no longer produce linker search paths
+# Allows examples to build
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
 # Project SUNDIALS (initially only C supported)
 # sets PROJECT_SOURCE_DIR and PROJECT_BINARY_DIR variables
 PROJECT(sundials C)
@@ -23,6 +36,11 @@ OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 OPTION(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
+
+# Get correct build paths automatically, but expose CMAKE_INSTALL_LIBDIR
+# as a regular cache variable so that a user can more easily see what
+# the library dir was set to be by GNUInstallDirs.
+INCLUDE(GNUInstallDirs)
 
 
 # ---------------------------------------------------------------
