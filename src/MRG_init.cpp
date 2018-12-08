@@ -5,9 +5,8 @@
 #include "MRG.h"
 #include "utils.h"
 
-#include <nvec_ser/nvector_serial.h>
+#include <nvector/nvector_serial.h>
 #include <cvode/cvode.h>
-#include <cvode/cvode_dense.h>
 
 
 const MRG_REAL PI = arma::datum::pi;
@@ -40,10 +39,10 @@ const MRG_REAL MRG::g_i			= MRG::g_p2;	// S/cm^2
 
 MRG::MRG(MRG_REAL fiber_diam) :
 	fiberD(fiber_diam),		// um
-	g_nap(0.010),			//  sodium channel conductivity [S/cm^2]
-	g_naf(3),				// S/cm^2
+	g_nap(0.010),			// sodium channel conductivity [S/cm^2]
 	g_k(0.080),				// S/cm^2
-	g_l(0.007)				//  leak channel conductivity [S/cm^2] 
+	g_l(0.007),				// leak channel conductivity [S/cm^2] 
+	g_naf(3)				// S/cm^2
 {
 	assert(fiberD == 10.0 || fiberD == 16.0);
 

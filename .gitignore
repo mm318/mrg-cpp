@@ -1,14 +1,1 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.d
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
+openFrameworks-0.10.1
