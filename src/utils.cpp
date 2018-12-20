@@ -9,7 +9,7 @@ const MRG_REAL rtNaN = arma::datum::nan;
 
 // taken from http://berenger.eu/blog/c-from-matlab-to-c-some-useful-functions/
 /** To inter-pole data */
-void interp1(const MRG_MATRIX_REAL &x, const MRG_MATRIX_REAL &y, const MRG_MATRIX_REAL &xi, MRG_MATRIX_REAL &yi)
+void MRG_interp1(const MRG_MATRIX_REAL &x, const MRG_MATRIX_REAL &y, const MRG_MATRIX_REAL &xi, MRG_MATRIX_REAL &yi)
 {
 	// expect that x, y, and xi are all column vectors
 	assert(x.is_colvec() && y.is_colvec() && xi.is_colvec());
@@ -83,7 +83,7 @@ int findNearestNeighbourIndex(MRG_REAL value, const MRG_MATRIX_REAL &x)
 
 
 // taken from http://stackoverflow.com/questions/9394867/c-implementation-of-matlab-interp1-function-linear-interpolation
-void interp1(const MRG_MATRIX_REAL &x, const MRG_MATRIX_REAL &y, const MRG_MATRIX_REAL &xi, MRG_MATRIX_REAL &yi)
+void MRG_interp1(const MRG_MATRIX_REAL &x, const MRG_MATRIX_REAL &y, const MRG_MATRIX_REAL &xi, MRG_MATRIX_REAL &yi)
 {
 	// expect that x, y, and xi are all column vectors
 	assert(x.is_colvec() && y.is_colvec() && xi.is_colvec());
@@ -129,7 +129,7 @@ void interp1(const MRG_MATRIX_REAL &x, const MRG_MATRIX_REAL &y, const MRG_MATRI
 #endif
 
 
-// void interp1(const MRG_MATRIX_REAL &x, const MRG_MATRIX_REAL &y, const MRG_MATRIX_REAL &xi, MRG_MATRIX_REAL &yi)
+// void MRG_interp1(const MRG_MATRIX_REAL &x, const MRG_MATRIX_REAL &y, const MRG_MATRIX_REAL &xi, MRG_MATRIX_REAL &yi)
 // {
 // 	// expect that x, y, and xi are all column vectors
 // 	assert(x.is_colvec() && y.is_colvec() && xi.is_colvec());
@@ -194,5 +194,4 @@ void interp1(const MRG_MATRIX_REAL &x, const MRG_MATRIX_REAL &y, const MRG_MATRI
 // 		}
 // 	}
 // }
-
 

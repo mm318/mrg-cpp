@@ -5,9 +5,10 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_nvector.h>
 
-
 typedef realtype 			MRG_REAL;
 typedef arma::Mat<MRG_REAL>	MRG_MATRIX_REAL;
+
+#include "utils.h"
 
 
 class MRG
@@ -15,7 +16,8 @@ class MRG
 public:
 	MRG(MRG_REAL fiber_diam = 16.0);
 
-	void run(MRG_REAL dur, const char *file, MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL stim_start, MRG_REAL stim_end);
+	void run(const char *file, MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period,
+			 MRG_REAL stim_start, MRG_REAL stim_end, RingBuffer<MRG_MATRIX_REAL> & output_buffer);
 
 	int odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const;
 
@@ -249,6 +251,7 @@ private:
 	int i_flut_b[4];
 	int i_inter_b[6][2];
 
+	MRG_REAL m_period;
 	MRG_REAL m_stim_start;
 	MRG_REAL m_stim_end;
 	MRG_MATRIX_REAL Xlr_stim;
