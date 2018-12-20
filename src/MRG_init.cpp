@@ -321,6 +321,7 @@ void MRG::calcX(const int N, MRG_MATRIX_REAL &x_n, MRG_MATRIX_REAL &x_m1, MRG_MA
 }
 
 
+/*
 void MRG::write_results(const char *file_name)
 {
 	unsigned int N_nodes = N_inter + 1;
@@ -365,6 +366,7 @@ void MRG::debug_dump(const char *file_name)
 	}
 	fclose(out_file);
 }
+*/
 
 
 void MRG::m_ab(const MRG_MATRIX_REAL &V, MRG_MATRIX_REAL &m_alpha, MRG_MATRIX_REAL &m_beta) const

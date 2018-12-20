@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <math.h>
 #include <thread>
-#include <chrono>
 
 #include "MRG.h"
 #include "utils.h"
@@ -154,8 +153,8 @@ void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL 
   // t.reserve(int(period / dtout + 0.5) + 1);
   {
     RingBuffer<MRG_MATRIX_REAL>::pointer Y = output_buffer.get_write_pointer();
-    Y->set_size(IC.n_rows, 1);
-    Y->col(0) = IC;
+    Y->set_size(N_nodes, 1);
+    *Y = IC(0, 0, size(*Y));
   }
 
   unsigned int i = 1;
@@ -169,24 +168,10 @@ void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL 
     // debug
     printf("Iteration %d: t = %e ms\n", i, t1);
 
-    while (true) {
-      {
-        RingBuffer<MRG_MATRIX_REAL>::pointer Y = output_buffer.get_write_pointer();
-        if (Y != nullptr) {
-          for (unsigned int j = 0; j < IC.n_rows; ++j) {
-            Y->set_size(IC.n_rows, 1);
-            (*Y)(j, 0) = NV_DATA_S(Y1)[j];
-          }
-          break;
-        }
-      }
-
-      // pop one element from buffer (FIFO behavior)
-      // RingBuffer<MRG_MATRIX_REAL>::pointer Y = output_buffer.get_read_pointer();
-      // debug
-      // puts("dropping sample"); 
-
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    RingBuffer<MRG_MATRIX_REAL>::pointer Y = output_buffer.get_write_pointer();
+    Y->set_size(N_nodes, 1);
+    for (int j = 0; j < N_nodes; ++j) {
+      (*Y)(j, 0) = NV_DATA_S(Y1)[j];
     }
   }
 

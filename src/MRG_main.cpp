@@ -63,13 +63,13 @@ int main(int argc, char ** argv)
   }
 
   MRG neuron_model;
-  RingBuffer<MRG_MATRIX_REAL> output_buffer(BUFFER_SIZE);
+  RingBuffer<MRG_MATRIX_REAL> buffer(BUFFER_SIZE);
   std::thread t(&MRG::run, &neuron_model, axon_file_path, V_fe, V_applied,
-                period, stim_start, stim_end, std::ref(output_buffer));
+                period, stim_start, stim_end, std::ref(buffer));
 
   // this kicks off the running of my app can be OF_WINDOW or OF_FULLSCREEN pass in width and height too:
   ofSetupOpenGL(1024, 768, OF_WINDOW);  // <-------- setup the GL context
-  ofRunApp(new ofApp());
+  ofRunApp(new ofApp(buffer));
 
   return 0;
 }

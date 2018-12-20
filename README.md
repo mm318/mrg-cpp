@@ -35,7 +35,7 @@ Visualization (implemented using openFrameworks) is also addded.
 
 ## Usage
 
-```bash
+```
 mrg_axon_model <axon file> <V_fe (mV)> <V_applied (mV)> <duration (ms)> <stim start (ms)> <stim end (ms)>
 ```
 

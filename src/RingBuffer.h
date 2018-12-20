@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <mutex>
+#include <condition_variable>
 
 
 template<class T>
@@ -22,8 +23,13 @@ public:
 
     pointer(RingBuffer * buffer, bool read) : m_buffer(buffer), m_read(read)
     {
-      get_mutex()->lock();
+      // should already be locked, ideally assert here that it is already locked
+      // get_mutex()->lock();
     }
+
+    pointer(pointer &&) = default;
+
+    pointer & operator=(pointer &&) = default;
 
     ~pointer()
     {
@@ -33,7 +39,6 @@ public:
         if (*idx == m_buffer->m_buffer.size()) {
           *idx = 0;
         }
-        get_mutex()->unlock();
 
         std::lock(m_buffer->m_write_mutex, m_buffer->m_read_mutex);
         if (m_buffer->m_read_idx == m_buffer->m_write_idx) {
@@ -45,6 +50,9 @@ public:
         }
         m_buffer->m_write_mutex.unlock();
         m_buffer->m_read_mutex.unlock();
+
+        get_mutex()->unlock();
+        get_condition_variable()->notify_one();
       }
     }
 
@@ -69,9 +77,18 @@ public:
     }
 
   private:
-    std::mutex * get_mutex() const
+    // Disallow copying
+    pointer(const pointer &) = delete;
+    pointer & operator=(const pointer &) = delete;
+
+    std::recursive_mutex * get_mutex() const
     {
       return (m_read) ? &m_buffer->m_read_mutex : &m_buffer->m_write_mutex;
+    }
+
+    std::condition_variable_any * get_condition_variable() const
+    {
+      return (m_read) ? &m_buffer->m_not_full : &m_buffer->m_not_empty;
     }
 
     T * get_data() const
@@ -79,8 +96,8 @@ public:
       if (nullptr == m_buffer) {
         return nullptr;
       } else {
-        return (m_read) ? &m_buffer->m_buffer[m_buffer->m_read_idx] 
-                        : &m_buffer->m_buffer[m_buffer->m_write_idx];
+        return (m_read) ? &m_buffer->m_buffer[m_buffer->m_read_idx]
+               : &m_buffer->m_buffer[m_buffer->m_write_idx];
       }
     }
 
@@ -111,32 +128,62 @@ public:
     return result;
   }
 
-  pointer get_write_pointer()
+  pointer try_get_write_pointer()
   {
+    std::unique_lock<std::recursive_mutex> lock(m_write_mutex);
+
     if (full()) {
       return pointer();
     } else {
+      lock.release();
       return pointer(this, false);
     }
   }
 
-  pointer get_read_pointer()
+  pointer try_get_read_pointer()
   {
+    std::unique_lock<std::recursive_mutex> lock(m_read_mutex);
+
     if (empty()) {
       return pointer();
     } else {
+      lock.release();
       return pointer(this, true);
     }
+  }
+
+  pointer get_write_pointer()
+  {
+    std::unique_lock<std::recursive_mutex> lock(m_write_mutex);
+
+    m_not_full.wait(lock, [this]() { return !this->full(); });
+
+    lock.release();
+    return pointer(this, false);
+  }
+
+  pointer get_read_pointer()
+  {
+    std::unique_lock<std::recursive_mutex> lock(m_read_mutex);
+
+    m_not_empty.wait(lock, [this]() { return !this->empty(); });
+
+    lock.release();
+    return pointer(this, true);
   }
 
 private:
   friend class pointer;
 
   std::vector<T> m_buffer;
+
   size_t m_write_idx; // empty location
-  mutable std::mutex m_write_mutex;
+  mutable std::recursive_mutex m_write_mutex;
+  std::condition_variable_any m_not_full;
+
   size_t m_read_idx;  // filled location (except when equal to m_write_mutex)
-  mutable std::mutex m_read_mutex;
+  mutable std::recursive_mutex m_read_mutex;
+  std::condition_variable_any m_not_empty;
 
   bool m_empty;
 };

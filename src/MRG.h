@@ -258,8 +258,8 @@ private:
 	MRG_MATRIX_REAL V_stim;
 	MRG_MATRIX_REAL Istim;
 
-	std::vector<MRG_REAL> t;
-	MRG_MATRIX_REAL Y;
+	// MRG_MATRIX_REAL Y;
+	// std::vector<MRG_REAL> t;
 };
 
 #endif

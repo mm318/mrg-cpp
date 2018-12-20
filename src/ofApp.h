@@ -1,11 +1,14 @@
 #pragma once
 
 #include "ofMain.h"
+#include "MRG.h"
 
 
 class ofApp : public ofBaseApp
 {
 public:
+  ofApp(RingBuffer<MRG_MATRIX_REAL> & input_buffer) : ofBaseApp(), m_input_buffer(input_buffer) {}
+
   void setup();
   void update();
   void draw();
@@ -27,6 +30,9 @@ public:
   void windowResized(int w, int h);
   void dragEvent(ofDragInfo dragInfo);
   void gotMessage(ofMessage msg);
+
+private:
+  RingBuffer<MRG_MATRIX_REAL> & m_input_buffer;
 
   float * signedNoiseData;
   int nSignedNoiseData;

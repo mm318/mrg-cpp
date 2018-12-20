@@ -4,7 +4,7 @@
 //--------------------------------------------------------------
 void ofApp::setup()
 {
-  ofSetWindowTitle("Noise 1D Example");
+  ofSetWindowTitle("Axon Node Voltages");
   ofBackground(215, 215, 215);
   ofSetVerticalSync(true);
   ofSetCircleResolution(256);
@@ -34,17 +34,20 @@ void ofApp::setupSignedNoiseDemo()
 //--------------------------------------------------------------
 void ofApp::update()
 {
+  RingBuffer<MRG_MATRIX_REAL>::pointer data = m_input_buffer.try_get_read_pointer();
+  if (data == nullptr) {
+  	return;
+  }
+
   // Shift all of the old data forward through the array
   for (int i = (nSignedNoiseData - 1); i > 0; i--) {
     signedNoiseData[i] = signedNoiseData[i - 1];
   }
 
   // Compute the latest data, and insert it at the head of the array.
-  // Here is where ofSignedNoise is requested.
-  float noiseStep    = 1.0f;
-  float noiseAmount  = 1.0f;
+  signedNoiseData[0] = data->at(0, 0);
 
-  signedNoiseData[0] = noiseAmount * ofSignedNoise( radialNoiseCursor );
+  float noiseStep = 1.0f;
   radialNoiseCursor += noiseStep;
 }
 
