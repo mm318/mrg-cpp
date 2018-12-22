@@ -1,5 +1,7 @@
 #pragma once
 
+#include <list>
+
 #include "ofMain.h"
 #include "MRG.h"
 
@@ -7,16 +9,11 @@
 class ofApp : public ofBaseApp
 {
 public:
-  ofApp(RingBuffer<MRG_MATRIX_REAL> & input_buffer) : ofBaseApp(), m_input_buffer(input_buffer) {}
+  ofApp(MRG & neuron_model);
 
   void setup();
   void update();
   void draw();
-
-  void setupSignedNoiseDemo();
-  void updateSignedNoiseDemo();
-  void renderSignedNoiseDemo();
-  void renderNoisyRobotArmDemo();
 
   //---------------------------------------
   void keyPressed(int key);
@@ -32,13 +29,6 @@ public:
   void gotMessage(ofMessage msg);
 
 private:
-  RingBuffer<MRG_MATRIX_REAL> & m_input_buffer;
-
-  float * signedNoiseData;
-  int nSignedNoiseData;
-
-  float radialNoiseCursor;
-  float radialNoiseDemoX;
-  float radialNoiseDemoY;
-  float radialNoiseDemoR; // radius
+  MRG & m_neuron_model;
+  std::list<MRG_REAL> m_data;
 };

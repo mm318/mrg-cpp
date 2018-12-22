@@ -13,13 +13,13 @@
 // wrapper function for ode callback
 int odeCVode(realtype t, N_Vector y, N_Vector ydot, void * user_data)
 {
-  MRG * model = (MRG *) user_data;
+  MRG * model = static_cast<MRG *>(user_data);
   return model->odeMcIntyr(t, y, ydot);
 }
 
 
-void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period,
-              MRG_REAL stim_start, MRG_REAL stim_end, RingBuffer<MRG_MATRIX_REAL> & output_buffer)
+void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied,
+              MRG_REAL period, MRG_REAL stim_start, MRG_REAL stim_end)
 {
   paracomp(mysaD, mysalength, space_p1, fiberD, c, r, g_p1, nl, mycm, mygm,
            r_mysa, r_pn1, c_mysa, c_mysa_m, g_mysa, g_mysa_m);
@@ -152,7 +152,7 @@ void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL 
   // t = std::vector<MRG_REAL>(1, 0.0);
   // t.reserve(int(period / dtout + 0.5) + 1);
   {
-    RingBuffer<MRG_MATRIX_REAL>::pointer Y = output_buffer.get_write_pointer();
+    RingBuffer<MRG_MATRIX_REAL>::pointer Y = m_data_buffer.get_write_pointer();
     Y->set_size(N_nodes, 1);
     *Y = IC(0, 0, size(*Y));
   }
@@ -168,7 +168,7 @@ void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL 
     // debug
     printf("Iteration %d: t = %e ms\n", i, t1);
 
-    RingBuffer<MRG_MATRIX_REAL>::pointer Y = output_buffer.get_write_pointer();
+    RingBuffer<MRG_MATRIX_REAL>::pointer Y = m_data_buffer.get_write_pointer();
     Y->set_size(N_nodes, 1);
     for (int j = 0; j < N_nodes; ++j) {
       (*Y)(j, 0) = NV_DATA_S(Y1)[j];

@@ -1,88 +1,96 @@
 #include "ofApp.h"
 
+static constexpr int NUM_DATA_POINTS = 801;
+static constexpr int MID_DATA_POINT = NUM_DATA_POINTS / 2;
+
+
+ofApp::ofApp(MRG & neuron_model) : ofBaseApp(), m_neuron_model(neuron_model)
+{
+  for (int i = 0; i < NUM_DATA_POINTS; ++i) {
+    RingBuffer<MRG_MATRIX_REAL>::pointer data = m_neuron_model.get_next_data();
+    m_data.push_back(data->at(0, 0));
+  }
+}
 
 //--------------------------------------------------------------
 void ofApp::setup()
 {
   ofSetWindowTitle("Axon Node Voltages");
-  ofBackground(215, 215, 215);
+  ofBackground(40, 40, 40);
   ofSetVerticalSync(true);
   ofSetCircleResolution(256);
-
-  setupSignedNoiseDemo();
-}
-
-//--------------------------------------------------------------
-void ofApp::setupSignedNoiseDemo()
-{
-  // Setup and allocate resources used in the signed noise demo.
-
-  nSignedNoiseData = 400; // we'll store a history of 400 numbers
-  signedNoiseData = new float[nSignedNoiseData];
-  for (int i = 0; i < nSignedNoiseData; i++) {
-    signedNoiseData[i] = 0;
-  }
-
-  // Some coordinates...
-  radialNoiseDemoY = 200;
-  radialNoiseDemoR = 100;
-  radialNoiseDemoX = ofGetWidth() / 2 - radialNoiseDemoR;
-
-  radialNoiseCursor = 0.0;
 }
 
 //--------------------------------------------------------------
 void ofApp::update()
 {
-  RingBuffer<MRG_MATRIX_REAL>::pointer data = m_input_buffer.try_get_read_pointer();
+  RingBuffer<MRG_MATRIX_REAL>::pointer data = m_neuron_model.try_get_next_data();
   if (data == nullptr) {
-  	return;
-  }
-
-  // Shift all of the old data forward through the array
-  for (int i = (nSignedNoiseData - 1); i > 0; i--) {
-    signedNoiseData[i] = signedNoiseData[i - 1];
+    return;
   }
 
   // Compute the latest data, and insert it at the head of the array.
-  signedNoiseData[0] = data->at(0, 0);
+  m_data.push_back(data->at(0, 0));
+  m_data.pop_front();
 
-  float noiseStep = 1.0f;
-  radialNoiseCursor += noiseStep;
+  // debug
+  // printf("m_data[0]: %f\n", m_data.back());
 }
 
 //--------------------------------------------------------------
 void ofApp::draw()
 {
-  ofBackgroundGradient(ofColor(255), ofColor(180), OF_GRADIENT_CIRCULAR);
+  int width = ofGetWindowWidth();
+  int height = ofGetWindowHeight();
+
+  ofBackgroundGradient(ofColor(40), ofColor(0), OF_GRADIENT_CIRCULAR);
 
   // Draw the stored noise history as a straightforward timeline.
   ofPushMatrix();
 
-  float drawWiggleWidth = radialNoiseDemoR * TWO_PI;
-  ofTranslate (radialNoiseDemoX + radialNoiseDemoR - drawWiggleWidth, radialNoiseDemoY - radialNoiseDemoR, 0);
   ofEnableAlphaBlending();
   ofEnableSmoothing();
-  ofNoFill();
+  ofFill();
 
   // draw a "baseline"
-  ofSetColor(0, 0, 0, 64);
-  ofDrawLine(0, 0, drawWiggleWidth, 0);
+  // ofSetColor(255, 255, 255, 64);
+  // ofDrawLine(width, 0, 0, height);
 
-  // draw a wiggly line
-  ofSetColor(255, 0, 0, 192);
+  ofSetLineWidth(2.0f);
+  ofTranslate(0, height / 2, 0);
   ofPolyline wigglyPolyLine;
-  for (int i = 0; i < nSignedNoiseData; i++) {
 
-    // From the 'i' iterator, use ofMap to compute both
-    // an angle (around a circle) and an alpha value.
-    float px = ofMap(i, 0, nSignedNoiseData - 1, drawWiggleWidth, 0);
-    float py = 0 - radialNoiseDemoR * signedNoiseData[i];
-    wigglyPolyLine.addVertex({px, py, 0}  );
+  // set the wiggly line
+  int i = 0;
+  auto iter = m_data.begin();
+
+  for (; i < MID_DATA_POINT; ++i, ++iter) {
+    // From the 'i' iterator, use ofMap to compute the x location of data point
+    float px = ofMap(i, 0, NUM_DATA_POINTS - 1, 0, width);
+    float py = -(*iter);
+    wigglyPolyLine.addVertex(px, py, 0.0f);
   }
+  ofSetColor(255, 0, 0, 100);
+  wigglyPolyLine.draw();  // draw the line
 
-  // draw the line
-  wigglyPolyLine.draw();
+  float point_x = ofMap(i, 0, NUM_DATA_POINTS - 1, 0, width);
+  float point_y = -(*iter);
+  ++i, ++iter;
+
+  wigglyPolyLine.clear();
+  for (; i < NUM_DATA_POINTS; ++i, ++iter) {
+    // From the 'i' iterator, use ofMap to compute the x location of data point
+    float px = ofMap(i, 0, NUM_DATA_POINTS - 1, 0, width);
+    float py = -(*iter);
+    wigglyPolyLine.addVertex(px, py, 0.0f);
+  }
+  ofSetColor(64, 64, 64, 100);
+  wigglyPolyLine.draw();  // draw the line
+
+  ofSetColor(215, 215, 215);
+  // ofDrawCircle(point_x, point_y, 3.0f);
+  ofDrawRectangle(point_x - 3.0f, point_y - 3.0f, 6.0f, 6.0f);
+
   ofPopMatrix();
 }
 

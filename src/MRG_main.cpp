@@ -13,9 +13,6 @@
 #include "ofApp.h"
 
 
-static constexpr int BUFFER_SIZE = 1000;
-
-
 void print_usage(const char * app_name)
 {
   printf("%s <axon file> <V_fe> <V_applied> <period> <stim start> <stim end>\n", app_name);
@@ -62,14 +59,13 @@ int main(int argc, char ** argv)
     return -1;
   }
 
+  // instantiate a neuron model
   MRG neuron_model;
-  RingBuffer<MRG_MATRIX_REAL> buffer(BUFFER_SIZE);
-  std::thread t(&MRG::run, &neuron_model, axon_file_path, V_fe, V_applied,
-                period, stim_start, stim_end, std::ref(buffer));
+  std::thread t(&MRG::run, &neuron_model, axon_file_path, V_fe, V_applied, period, stim_start, stim_end);
 
   // this kicks off the running of my app can be OF_WINDOW or OF_FULLSCREEN pass in width and height too:
   ofSetupOpenGL(1024, 768, OF_WINDOW);  // <-------- setup the GL context
-  ofRunApp(new ofApp(buffer));
+  ofRunApp(new ofApp(neuron_model));
 
   return 0;
 }
