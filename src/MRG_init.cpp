@@ -5,9 +5,8 @@
 #include "MRG.h"
 #include "utils.h"
 
-#include <nvec_ser/nvector_serial.h>
+#include <nvector/nvector_serial.h>
 #include <cvode/cvode.h>
-#include <cvode/cvode_dense.h>
 
 static constexpr int BUFFER_SIZE = 1000;
 
@@ -221,18 +220,18 @@ void MRG::interpolate(const char * file, MRG_MATRIX_REAL & Ve, int & N, MRG_MATR
   MRG_MATRIX_REAL Ve_f_1, Ve_f_2;
   MRG_MATRIX_REAL Ve_i_1, Ve_i_2, Ve_i_3, Ve_i_4, Ve_i_5, Ve_i_6;
 
-  interp1(s, Ve_pulse, xlr, Vlr);
-  interp1(s, Ve_pulse, x_n, Ve_n);
-  interp1(s, Ve_pulse, x_m.col(0), Ve_m_1);
-  interp1(s, Ve_pulse, x_m.col(1), Ve_m_2);
-  interp1(s, Ve_pulse, x_f.col(0), Ve_f_1);
-  interp1(s, Ve_pulse, x_f.col(1), Ve_f_2);
-  interp1(s, Ve_pulse, x_i.col(0), Ve_i_1);
-  interp1(s, Ve_pulse, x_i.col(1), Ve_i_2);
-  interp1(s, Ve_pulse, x_i.col(2), Ve_i_3);
-  interp1(s, Ve_pulse, x_i.col(3), Ve_i_4);
-  interp1(s, Ve_pulse, x_i.col(4), Ve_i_5);
-  interp1(s, Ve_pulse, x_i.col(5), Ve_i_6);
+  MRG_interp1(s, Ve_pulse, xlr, Vlr);
+  MRG_interp1(s, Ve_pulse, x_n, Ve_n);
+  MRG_interp1(s, Ve_pulse, x_m.col(0), Ve_m_1);
+  MRG_interp1(s, Ve_pulse, x_m.col(1), Ve_m_2);
+  MRG_interp1(s, Ve_pulse, x_f.col(0), Ve_f_1);
+  MRG_interp1(s, Ve_pulse, x_f.col(1), Ve_f_2);
+  MRG_interp1(s, Ve_pulse, x_i.col(0), Ve_i_1);
+  MRG_interp1(s, Ve_pulse, x_i.col(1), Ve_i_2);
+  MRG_interp1(s, Ve_pulse, x_i.col(2), Ve_i_3);
+  MRG_interp1(s, Ve_pulse, x_i.col(3), Ve_i_4);
+  MRG_interp1(s, Ve_pulse, x_i.col(4), Ve_i_5);
+  MRG_interp1(s, Ve_pulse, x_i.col(5), Ve_i_6);
 
   Ve = Ve_n;
   Ve.insert_rows(Ve.n_rows, arma::zeros<MRG_MATRIX_REAL>(4 * N, 1));

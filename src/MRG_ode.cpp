@@ -5,9 +5,11 @@
 #include "MRG.h"
 #include "utils.h"
 
-#include <nvec_ser/nvector_serial.h>
+#include <nvector/nvector_serial.h>
+#include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
+#include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <cvode/cvode.h>
-#include <cvode/cvode_dense.h>
+#include <cvode/cvode_direct.h>        /* access to CVDls interface            */
 
 
 // wrapper function for ode callback
@@ -132,12 +134,14 @@ void MRG::run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_
     NV_DATA_S(y0)[i] = IC(i, 0);
   }
 
-  void * cv_ode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
+  void * cv_ode_mem = CVodeCreate(CV_BDF);
   CVodeInit(cv_ode_mem, odeCVode, 0, y0);
   CVodeSStolerances(cv_ode_mem, 1e-3f, 1e-4f);
   CVodeSetUserData(cv_ode_mem, this);
-  int ret = CVDense(cv_ode_mem, IC.n_rows);
-  assert(ret == CVDLS_SUCCESS);
+  SUNMatrix A = SUNDenseMatrix(IC.n_rows, IC.n_rows);
+  SUNLinearSolver LS = SUNDenseLinearSolver(y0, A);
+  int ret = CVDlsSetLinearSolver(cv_ode_mem, LS, A);
+  assert(ret == CVLS_SUCCESS);
 
   Istim.zeros(N_nodes, 1);
 
@@ -171,6 +175,8 @@ void MRG::run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_
   }
 
   CVodeFree(&cv_ode_mem);
+  SUNLinSolFree(LS);
+  SUNMatDestroy(A);
 }
 
 
@@ -252,21 +258,21 @@ int MRG::odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const
   MRG_MATRIX_REAL mysa_r_e(mysa_r + mysa_r_b);  // MRG_MATRIX_REAL mysa_r_e(mysa_r + mysa_r_b_e);
   MRG_MATRIX_REAL flut_l_e(flut_l + flut_l_b);  // MRG_MATRIX_REAL flut_l_e(flut_l + flut_l_b_e);
   MRG_MATRIX_REAL flut_r_e(flut_r + flut_r_b);  // MRG_MATRIX_REAL flut_r_e(flut_r + flut_r_b_e);
-  MRG_MATRIX_REAL inter_e(inter + inter_b);   // MRG_MATRIX_REAL inter_e(inter + inter_b_e);
+  MRG_MATRIX_REAL inter_e(inter + inter_b);     // MRG_MATRIX_REAL inter_e(inter + inter_b_e);
 
   MRG_MATRIX_REAL dnode, dpara_m, dpara_h, dpara_p, dpara_s;
   // nodeEq(node, para_m, para_h, para_p, para_s, node_e, mysa_l_e, mysa_r_e,
-  //  V_e.rows(i_node[0], i_node[1]), V_e.rows(i_mysa[0], i_mysa[1]),
-  //  V_e.rows(i_mysa[2],i_mysa[3]), dnode, dpara_m, dpara_h, dpara_p, dpara_s);
+  //        V_e.rows(i_node[0], i_node[1]), V_e.rows(i_mysa[0], i_mysa[1]),
+  //        V_e.rows(i_mysa[2],i_mysa[3]), dnode, dpara_m, dpara_h, dpara_p, dpara_s);
   nodeEq(node, para_m, para_h, para_p, para_s, node, mysa_l_e, mysa_r_e,
          V_e.rows(i_node[0], i_node[1]), V_e.rows(i_mysa[0], i_mysa[1]),
          V_e.rows(i_mysa[2], i_mysa[3]), dnode, dpara_m, dpara_h, dpara_p, dpara_s);
 
   MRG_MATRIX_REAL dmysa_l, dmysa_l_b;
   // mysaEq(mysa_l, mysa_l_b, mysa_l_e, node_e.rows(1, N_nodes-1), flut_l_e,
-  //  mysa_l_b_e, 0, flut_l_b_e, V_e.rows(i_mysa[0], i_mysa[1]),
-  //  V_e.rows(1, N_nodes-1), V_e.rows(i_flut[0], i_flut[1]),
-  //  dmysa_l, dmysa_l_b);
+  //        mysa_l_b_e, 0, flut_l_b_e, V_e.rows(i_mysa[0], i_mysa[1]),
+  //        V_e.rows(1, N_nodes-1), V_e.rows(i_flut[0], i_flut[1]),
+  //        dmysa_l, dmysa_l_b);
   mysaEq(mysa_l, mysa_l_b, mysa_l_e, node.rows(1, N_nodes - 1), flut_l_e, mysa_l_b,
          arma::zeros<MRG_MATRIX_REAL>(mysa_l_e.n_rows, 1), flut_l_b,
          V_e.rows(i_mysa[0], i_mysa[1]), V_e.rows(1, N_nodes - 1),
@@ -274,9 +280,9 @@ int MRG::odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const
 
   MRG_MATRIX_REAL dmysa_r, dmysa_r_b;
   // mysaEq(mysa_r, mysa_r_b, mysa_r_e, node_e.rows(0, N_inter-1), flut_r_e,
-  //  mysa_r_b_e, 0, flut_r_b_e, V_e.rows(i_mysa[2], i_mysa[3]),
-  //  V_e.rows(0, N_inter-1), V_e.rows(i_flut[2], i_flut[3]),
-  //  dmysa_r, dmysa_r_b);
+  //        mysa_r_b_e, 0, flut_r_b_e, V_e.rows(i_mysa[2], i_mysa[3]),
+  //        V_e.rows(0, N_inter-1), V_e.rows(i_flut[2], i_flut[3]),
+  //        dmysa_r, dmysa_r_b);
   mysaEq(mysa_r, mysa_r_b, mysa_r_e, node.rows(0, N_inter - 1), flut_r_e, mysa_r_b,
          arma::zeros<MRG_MATRIX_REAL>(mysa_r_e.n_rows, 1), flut_r_b,
          V_e.rows(i_mysa[2], i_mysa[3]), V_e.rows(0, N_inter - 1),
@@ -284,16 +290,16 @@ int MRG::odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const
 
   MRG_MATRIX_REAL dflut_l, dflut_l_b;
   // flutEq(flut_l, flut_l_b, flut_l_e, mysa_l_e, inter_e.col(0), flut_l_b_e, mysa_l_b_e,
-  //  inter_b_e.col(0), V_e.rows(i_flut[0], i_flut[1]), V_e.rows(i_mysa[0], i_mysa[1]),
-  //  V_e.rows(i_inter[0][0], i_inter[0][1]), dflut_l, dflut_l_b);
+  //        inter_b_e.col(0), V_e.rows(i_flut[0], i_flut[1]), V_e.rows(i_mysa[0], i_mysa[1]),
+  //        V_e.rows(i_inter[0][0], i_inter[0][1]), dflut_l, dflut_l_b);
   flutEq(flut_l, flut_l_b, flut_l_e, mysa_l_e, inter_e.col(0), flut_l_e, mysa_l_e,
          inter_e.col(0), V_e.rows(i_flut[0], i_flut[1]), V_e.rows(i_mysa[0], i_mysa[1]),
          V_e.rows(i_inter[0][0], i_inter[0][1]), dflut_l, dflut_l_b);
 
   MRG_MATRIX_REAL dflut_r, dflut_r_b;
   // flutEq(flut_r, flut_r_b, flut_r_e, mysa_r_e, inter_e.col(5), flut_r_b_e, mysa_r_b_e,
-  //  inter_b_e.col(6), V_e.rows(i_flut[2], i_flut[3]), V_e.rows(i_mysa[2], i_mysa[3]),
-  //  V_e.rows(i_inter[5][0], i_inter[5][1]), dflut_r, dflut_r_b);
+  //        inter_b_e.col(6), V_e.rows(i_flut[2], i_flut[3]), V_e.rows(i_mysa[2], i_mysa[3]),
+  //        V_e.rows(i_inter[5][0], i_inter[5][1]), dflut_r, dflut_r_b);
   flutEq(flut_r, flut_r_b, flut_r_e, mysa_r_e, inter_e.col(5), flut_r_e, mysa_r_e,
          inter_e.col(5), V_e.rows(i_flut[2], i_flut[3]), V_e.rows(i_mysa[2], i_mysa[3]),
          V_e.rows(i_inter[5][0], i_inter[5][1]), dflut_r, dflut_r_b);
@@ -311,8 +317,8 @@ int MRG::odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const
 
   MRG_MATRIX_REAL dinter, dinter_b;
   // interEq(inter, inter_b, inter_e, flut_l_e, flut_r_e, inter_b_e, flut_l_b_e,
-  //  flut_r_b_e, e_inter, V_e.rows(i_flut[0], i_flut[1]), V_e.rows(i_flut[2], i_flut[2]),
-  //  dinter, dinter_b);
+  //         flut_r_b_e, e_inter, V_e.rows(i_flut[0], i_flut[1]), V_e.rows(i_flut[2], i_flut[2]),
+  //         dinter, dinter_b);
   interEq(inter, inter_b, inter_e, flut_l_e, flut_r_e, inter_e, flut_l_e, flut_r_e,
           e_inter, V_e.rows(i_flut[0], i_flut[1]), V_e.rows(i_flut[2], i_flut[3]),
           dinter, dinter_b);
@@ -348,12 +354,11 @@ int MRG::odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const
   dY.rows(i_inter_b[5][0], i_inter_b[5][1]) = dinter_b.col(5);
 
   // debug
-  // if(t > 1)
-  // {
-  //  printf("At t = %f\n", t);
-  //  Y.raw_print("Y =");
-  //  dY.raw_print("dY =");
-  //  puts("\n");
+  // if (t > 1) {
+  //   printf("At t = %f\n", t);
+  //   Y.raw_print("Y =");
+  //   dY.raw_print("dY =");
+  //   puts("\n");
   // }
 
   return 0; // successful
@@ -578,10 +583,10 @@ void MRG::axnode2
   dpdt(s_alpha, s_beta, s, ds);
 
   MRG_MATRIX_REAL I_Naf = g_naf * (m % m % m) % h % (V - e_na); // Fast Sodium current
-  MRG_MATRIX_REAL I_Nap = g_nap * (p % p % p) % (V - e_na); // Persistent Sodium current
-  MRG_MATRIX_REAL I_Ks = g_k * s % (V - e_k);       // Slow Potassium current
-  MRG_MATRIX_REAL I_Lk = g_l * (V - e_l);       // Leakage current
-  I = I_Naf + I_Nap + I_Ks + I_Lk;          // Sum of all nodal currents
+  MRG_MATRIX_REAL I_Nap = g_nap * (p % p % p) % (V - e_na);     // Persistent Sodium current
+  MRG_MATRIX_REAL I_Ks = g_k * s % (V - e_k);                   // Slow Potassium current
+  MRG_MATRIX_REAL I_Lk = g_l * (V - e_l);                       // Leakage current
+  I = I_Naf + I_Nap + I_Ks + I_Lk;                              // Sum of all nodal currents
 }
 
 
@@ -597,4 +602,3 @@ void MRG::dpdt
 {
   dp = alpha % (1 - para) - beta % para;
 }
-

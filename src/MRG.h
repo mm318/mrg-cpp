@@ -1,7 +1,7 @@
 #ifndef _MRG_H_
 #define _MRG_H_
 
-#include <armadillo/armadillo>
+#include <armadillo>
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_nvector.h>
 

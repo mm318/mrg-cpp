@@ -23,29 +23,6 @@ set( ${APP_NAME}_SOURCE_FILES
         src/MRG_init.cpp
         src/MRG_ode.cpp
         src/utils.cpp
-        src/libs/nvec_ser/nvector_serial.c
-        src/libs/nvec_ser/fnvector_serial.c
-        src/libs/sundials/sundials_math.c
-        src/libs/sundials/sundials_spgmr.c
-        src/libs/sundials/sundials_iterative.c
-        src/libs/sundials/sundials_dense.c
-        src/libs/sundials/sundials_nvector.c
-        src/libs/sundials/sundials_sptfqmr.c
-        src/libs/sundials/sundials_band.c
-        src/libs/sundials/sundials_direct.c
-        src/libs/sundials/sundials_spbcgs.c
-        src/libs/cvode/cvode_diag.c
-        src/libs/cvode/cvode_spbcgs.c
-        src/libs/cvode/cvode_io.c
-        src/libs/cvode/cvode.c
-        src/libs/cvode/cvode_band.c
-        src/libs/cvode/cvode_spils.c
-        src/libs/cvode/cvode_bbdpre.c
-        src/libs/cvode/cvode_spgmr.c
-        src/libs/cvode/cvode_sptfqmr.c
-        src/libs/cvode/cvode_dense.c
-        src/libs/cvode/cvode_bandpre.c
-        src/libs/cvode/cvode_direct.c
         src/ofApp.cpp
         )
 
@@ -70,4 +47,21 @@ set( OFX_ADDONS_ACTIVE
 include( ${OF_DIRECTORY_BY_USER}/addons/ofxCMake/modules/main.cmake )
 # =========================================================================
 
-target_include_directories(${APP_NAME} PRIVATE src/libs)
+# =========================================================================
+# ============================== Armadillo ================================
+# =========================================================================
+target_include_directories(${APP_NAME} PRIVATE src/libs/armadillo-9.200.5)
+# =========================================================================
+
+# =========================================================================
+# ============================== SUNDIALS =================================
+# =========================================================================
+add_subdirectory(src/libs/sundials-4.0.0 "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/sundials")
+target_include_directories(${APP_NAME} PRIVATE ${sundials_SOURCE_DIR}/include)
+target_link_libraries(${APP_NAME}
+                        sundials_cvode_static
+                        sundials_sunlinsoldense_static
+                        sundials_sunmatrixdense_static
+                        sundials_nvecserial_static
+                        )
+# =========================================================================

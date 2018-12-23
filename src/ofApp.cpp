@@ -24,7 +24,7 @@ ofApp::ofApp(MRG & neuron_model)
 
     int j = 0;
     for (auto iter = m_data.begin(); iter != m_data.end(); ++iter, ++j) {
-      iter->push_back(data->at(j, 0));
+      iter->push_back((*data)(j, 0));
     }
   }
 }
@@ -50,7 +50,7 @@ void ofApp::update()
   // insert the latest data at the head of the array.
   int i = 0;
   for (auto iter = m_data.begin(); iter != m_data.end(); ++iter, ++i) {
-    iter->push_back(data->at(i, 0));
+    iter->push_back((*data)(i, 0));
     iter->pop_front();
   }
 
