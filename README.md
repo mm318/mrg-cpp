@@ -44,7 +44,7 @@ The axon file is in the format (tab separated): `<x (m)> <y (m)> <z (m)> <Ve_pul
 ### Example
 
 ```bash
-mrg_axon_model reference/activateF.txt 1 3 100 20 90
+mrg_axon_model reference/activateF.txt 1 3 3 2 2.5
 ```
 
 

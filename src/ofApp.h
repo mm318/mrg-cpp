@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <list>
 
 #include "ofMain.h"
@@ -29,6 +30,8 @@ public:
   void gotMessage(ofMessage msg);
 
 private:
+  MRG_REAL get_vrest() const { return m_neuron_model.get_Vrest(); }
+
   MRG & m_neuron_model;
-  std::list<MRG_REAL> m_data;
+  std::vector<std::list<MRG_REAL>> m_data;
 };

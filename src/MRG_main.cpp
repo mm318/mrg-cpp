@@ -60,8 +60,8 @@ int main(int argc, char ** argv)
   }
 
   // instantiate a neuron model
-  MRG neuron_model;
-  std::thread t(&MRG::run, &neuron_model, axon_file_path, V_fe, V_applied, period, stim_start, stim_end);
+  MRG neuron_model(axon_file_path);
+  std::thread t(&MRG::run, &neuron_model, V_fe, V_applied, period, stim_start, stim_end);
 
   // this kicks off the running of my app can be OF_WINDOW or OF_FULLSCREEN pass in width and height too:
   ofSetupOpenGL(1024, 768, OF_WINDOW);  // <-------- setup the GL context

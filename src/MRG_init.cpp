@@ -40,7 +40,7 @@ const MRG_REAL MRG::g_i         = MRG::g_p2;    // S/cm^2
 
 
 
-MRG::MRG(MRG_REAL fiber_diam)
+MRG::MRG(const char * in_file, MRG_REAL fiber_diam)
   : fiberD(fiber_diam),         // um
     g_nap(0.010),               // sodium channel conductivity [S/cm^2]
     g_k(0.080),                 // S/cm^2
@@ -74,6 +74,11 @@ MRG::MRG(MRG_REAL fiber_diam)
   q10_1 = pow(2.2, ((celsius - 20.0) / 10.0));
   q10_2 = pow(2.9, ((celsius - 20.0) / 10.0));
   q10_3 = pow(3.0, ((celsius - 36.0) / 10.0));
+
+  int N_nodes = -1;
+  interpolate(in_file, V_stim, N_nodes, Xlr);
+  assert(N_nodes > 0);
+  N_inter = N_nodes - 1;
 }
 
 

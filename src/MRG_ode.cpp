@@ -18,8 +18,7 @@ int odeCVode(realtype t, N_Vector y, N_Vector ydot, void * user_data)
 }
 
 
-void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied,
-              MRG_REAL period, MRG_REAL stim_start, MRG_REAL stim_end)
+void MRG::run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_start, MRG_REAL stim_end)
 {
   paracomp(mysaD, mysalength, space_p1, fiberD, c, r, g_p1, nl, mycm, mygm,
            r_mysa, r_pn1, c_mysa, c_mysa_m, g_mysa, g_mysa_m);
@@ -36,17 +35,12 @@ void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied,
   c_node = calcCapacity(nodeD, nodelength, c);
   r_pn0 = calcResPeriax(nodeD, nodelength, space_p1, r);
 
-  int N_nodes = -1;
-  interpolate(in_file, V_stim, N_nodes, Xlr);
-  assert(N_nodes > 0);
-
   Xlr_stim = Xlr * (V_applied / V_fe);
   V_stim *= (V_applied / V_fe);
   m_period = period;
   m_stim_start = stim_start;
   m_stim_end = stim_end;
-
-  N_inter = N_nodes - 1;
+  int N_nodes = N_inter + 1;
 
   // index values of the dV vector
   i_node[0] = 0;
@@ -166,7 +160,8 @@ void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied,
     // t.push_back(t1);
 
     // debug
-    printf("Iteration %d: t = %e ms\n", i, t1);
+    const MRG_MATRIX_REAL & V_e = get_Ve(t1);
+    printf("Iteration %d: t = %e ms, V_e = %e mV\n", i, t1, V_e(N_nodes / 2, 0));
 
     RingBuffer<MRG_MATRIX_REAL>::pointer Y = m_data_buffer.get_write_pointer();
     Y->set_size(N_nodes, 1);
@@ -176,6 +171,22 @@ void MRG::run(const char * in_file, MRG_REAL V_fe, MRG_REAL V_applied,
   }
 
   CVodeFree(&cv_ode_mem);
+}
+
+
+const MRG_MATRIX_REAL & MRG::get_Ve(MRG_REAL t) const
+{
+  static const MRG_MATRIX_REAL V_nostim = arma::zeros<MRG_MATRIX_REAL>(i_inter[5][1] + 1, 1);
+  MRG_REAL period_t = fmod(t, m_period);
+  return (period_t >= m_stim_start && period_t <= m_stim_end) ? V_stim : V_nostim;
+}
+
+
+const MRG_MATRIX_REAL & MRG::get_Xlr(MRG_REAL t) const
+{
+  static const MRG_MATRIX_REAL Xlr_nostim = arma::zeros<MRG_MATRIX_REAL>(2, 1);
+  MRG_REAL period_t = fmod(t, m_period);
+  return (period_t >= m_stim_start && period_t <= m_stim_end) ? Xlr_stim : Xlr_nostim;
 }
 
 
@@ -189,11 +200,8 @@ int MRG::odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const
 
   MRG_MATRIX_REAL Y(NV_DATA_S(y), NV_LENGTH_S(y), 1, false);
 
-  MRG_REAL period_t = fmod(t, m_period);
-  const MRG_MATRIX_REAL & V_e = (period_t >= m_stim_start && period_t <= m_stim_end) ? V_stim
-                                : arma::zeros<MRG_MATRIX_REAL>(i_inter[5][1] + 1, 1);
-  Xlr = (period_t >= m_stim_start && period_t <= m_stim_end) ? Xlr_stim
-        : arma::zeros<MRG_MATRIX_REAL>(2, 1);
+  const MRG_MATRIX_REAL & V_e = get_Ve(t);
+  Xlr = get_Xlr(t);
 
   MRG_MATRIX_REAL inter(arma::zeros<MRG_MATRIX_REAL>(N_inter, 6));
   MRG_MATRIX_REAL inter_b(arma::zeros<MRG_MATRIX_REAL>(N_inter, 6));

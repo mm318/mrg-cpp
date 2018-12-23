@@ -14,23 +14,26 @@ typedef arma::Mat<MRG_REAL> MRG_MATRIX_REAL;
 class MRG
 {
 public:
-  MRG(MRG_REAL fiber_diam = 16.0);
+  MRG(const char * file, MRG_REAL fiber_diam = 16.0);
 
-  void run(const char * file, MRG_REAL V_fe, MRG_REAL V_applied,
-           MRG_REAL period, MRG_REAL stim_start, MRG_REAL stim_end);
+  void run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_start, MRG_REAL stim_end);
 
   RingBuffer<MRG_MATRIX_REAL>::pointer try_get_next_data() { return m_data_buffer.try_get_read_pointer(); }
 
   RingBuffer<MRG_MATRIX_REAL>::pointer get_next_data() { return m_data_buffer.get_read_pointer(); }
 
-  static MRG_REAL get_vrest() { return vrest; }
+  static MRG_REAL get_Vrest() { return vrest; }
+
+  int get_num_nodes() const { return N_inter + 1; }
 
   // void write_results(const char *file_name);
-
   // void debug_dump(const char *file_name);
 
 private:
   friend int odeCVode(realtype t, N_Vector y, N_Vector ydot, void * user_data);
+
+  const MRG_MATRIX_REAL & get_Ve(MRG_REAL t) const;
+  const MRG_MATRIX_REAL & get_Xlr(MRG_REAL t) const;
 
   int odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const;
 
