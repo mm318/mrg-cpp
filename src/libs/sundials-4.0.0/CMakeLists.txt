@@ -87,7 +87,7 @@ ENDMACRO(ADD_PREFIX)
 
 # Always add SUNDIALS provided serial modules
 ADD_SUBDIRECTORY(src/sundials)
-ADD_SUBDIRECTORY(src/nvec_ser)
+ADD_SUBDIRECTORY(src/nvec_pthreads)
 ADD_SUBDIRECTORY(src/sunmat_dense)
 ADD_SUBDIRECTORY(src/sunmat_band)
 ADD_SUBDIRECTORY(src/sunmat_sparse)

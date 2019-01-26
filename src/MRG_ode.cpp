@@ -5,7 +5,7 @@
 #include "MRG.h"
 #include "utils.h"
 
-#include <nvector/nvector_serial.h>
+#include <nvector/nvector_pthreads.h>
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <cvode/cvode.h>
@@ -129,9 +129,9 @@ void MRG::run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_
   V_stim.raw_print("V_stim =");
   puts("\n");
 
-  N_Vector y0 = N_VNew_Serial(IC.n_rows);
+  N_Vector y0 = N_VNew_Pthreads(IC.n_rows, 2);
   for (unsigned int i = 0; i < IC.n_rows; ++i) {
-    NV_DATA_S(y0)[i] = IC(i, 0);
+    NV_DATA_PT(y0)[i] = IC(i, 0);
   }
 
   void * cv_ode_mem = CVodeCreate(CV_BDF);
@@ -170,7 +170,7 @@ void MRG::run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_
     RingBuffer<MRG_MATRIX_REAL>::pointer Y = m_data_buffer.get_write_pointer();
     Y->set_size(N_nodes, 1);
     for (int j = 0; j < N_nodes; ++j) {
-      (*Y)(j, 0) = NV_DATA_S(Y1)[j];
+      (*Y)(j, 0) = NV_DATA_PT(Y1)[j];
     }
   }
 
@@ -201,10 +201,10 @@ const MRG_MATRIX_REAL & MRG::get_Xlr(MRG_REAL t) const
 // unrecoverably (in which case the integration is halted and CV RHSFUNC FAIL is returned).
 int MRG::odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const
 {
-  assert(NV_DATA_S(y) != NV_DATA_S(ydot));
-  assert(NV_LENGTH_S(y) == NV_LENGTH_S(ydot));
+  assert(NV_DATA_PT(y) != NV_DATA_PT(ydot));
+  assert(NV_LENGTH_PT(y) == NV_LENGTH_PT(ydot));
 
-  MRG_MATRIX_REAL Y(NV_DATA_S(y), NV_LENGTH_S(y), 1, false);
+  MRG_MATRIX_REAL Y(NV_DATA_PT(y), NV_LENGTH_PT(y), 1, false);
 
   const MRG_MATRIX_REAL & V_e = get_Ve(t);
   Xlr = get_Xlr(t);
@@ -324,7 +324,7 @@ int MRG::odeMcIntyr(realtype t, N_Vector y, N_Vector ydot) const
           dinter, dinter_b);
 
   // finally assemble derivatives into an
-  MRG_MATRIX_REAL dY(NV_DATA_S(ydot), NV_LENGTH_S(ydot), 1, false);
+  MRG_MATRIX_REAL dY(NV_DATA_PT(ydot), NV_LENGTH_PT(ydot), 1, false);
   dY.rows(i_node[0], i_node[1]) = dnode;
   dY.rows(i_para_m[0], i_para_m[1]) = dpara_m;
   dY.rows(i_para_h[0], i_para_h[1]) = dpara_h;
