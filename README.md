@@ -18,8 +18,14 @@ Visualization (implemented using openFrameworks) is also addded.
 
     ```bash
     $ wget https://github.com/openframeworks/openFrameworks/archive/0.10.1.tar.gz && tar xvzf 0.10.1.tar.gz && rm 0.10.1.tar.gz
-    $ sudo openFrameworks-0.10.1/scripts/linux/ubuntu/install_dependencies.sh   # maybe optional
+
+    # optional if dependencies are already installed
+    $ sudo openFrameworks-0.10.1/scripts/linux/ubuntu/install_dependencies.sh
+
     $ openFrameworks-0.10.1/scripts/linux/download_libs.sh
+    $ rm -rf openFrameworks-0.10.1/addons/ofxPoco/libs/
+    $ tar xvjf libs/libPoco-1.9.0.tar.bz2 -C openFrameworks-0.10.1/addons/ofxPoco/
+
     $ git clone https://github.com/mm318/ofxCMake.git openFrameworks-0.10.1/addons/ofxCMake
     ```
 
