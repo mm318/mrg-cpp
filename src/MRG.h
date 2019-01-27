@@ -16,7 +16,8 @@ class MRG
 public:
   MRG(const char * file, MRG_REAL fiber_diam = 16.0);
 
-  void run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_start, MRG_REAL stim_end);
+  void run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_start, MRG_REAL stim_end,
+           unsigned int time_steps, bool cache_on);
 
   RingBuffer<MRG_MATRIX_REAL>::pointer try_get_next_data() { return m_data_buffer.try_get_read_pointer(); }
 
@@ -270,8 +271,8 @@ private:
   MRG_MATRIX_REAL Istim;
 
   RingBuffer<MRG_MATRIX_REAL> m_data_buffer;
-  // MRG_MATRIX_REAL Y;
-  // std::vector<MRG_REAL> t;
+
+  std::vector<MRG_MATRIX_REAL> m_cache; // stores results of a full period
 };
 
 #endif

@@ -28,6 +28,7 @@ set( ${APP_NAME}_SOURCE_FILES
 
 # ------------------------ AddOns  -----------------------
 set( OFX_ADDONS_ACTIVE
+         ofxPoco
 #        ofxXmlSettings
 #        ofxOsc
 #        ofxGui
@@ -59,6 +60,7 @@ target_include_directories(${APP_NAME} PRIVATE src/libs/armadillo-9.200.5)
 add_subdirectory(src/libs/sundials-4.0.0 "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/sundials")
 target_include_directories(${APP_NAME} PRIVATE ${sundials_SOURCE_DIR}/include)
 target_link_libraries(${APP_NAME}
+                        ofxPoco
                         sundials_cvode_static
                         sundials_sunlinsoldense_static
                         sundials_sunmatrixdense_static

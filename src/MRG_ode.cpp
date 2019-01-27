@@ -12,6 +12,12 @@
 #include <cvode/cvode_direct.h>        /* access to CVDls interface            */
 
 
+constexpr uint64_t REFERENCE_PERIOD = 4;  // don't use the first period as the reference since it
+                                          // might not have settled into a repeatable state yet
+                                          // since the state at the start of the model could be very
+                                          // different from the state at the end of a later period
+
+
 // wrapper function for ode callback
 int odeCVode(realtype t, N_Vector y, N_Vector ydot, void * user_data)
 {
@@ -20,7 +26,8 @@ int odeCVode(realtype t, N_Vector y, N_Vector ydot, void * user_data)
 }
 
 
-void MRG::run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_start, MRG_REAL stim_end)
+void MRG::run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_start, MRG_REAL stim_end,
+              unsigned int time_steps, bool cache_on)
 {
   paracomp(mysaD, mysalength, space_p1, fiberD, c, r, g_p1, nl, mycm, mygm,
            r_mysa, r_pn1, c_mysa, c_mysa_m, g_mysa, g_mysa_m);
@@ -145,33 +152,54 @@ void MRG::run(MRG_REAL V_fe, MRG_REAL V_applied, MRG_REAL period, MRG_REAL stim_
 
   Istim.zeros(N_nodes, 1);
 
-  static const MRG_REAL dtout = 0.01;
-
-  // t = std::vector<MRG_REAL>(1, 0.0);
-  // t.reserve(int(period / dtout + 0.5) + 1);
+  const MRG_REAL dtout = period / time_steps;
+  if (cache_on) {
+    m_cache.resize(time_steps);
+  }
   {
     RingBuffer<MRG_MATRIX_REAL>::pointer Y = m_data_buffer.get_write_pointer();
     Y->set_size(N_nodes, 1);
     *Y = IC(0, 0, size(*Y));
   }
 
-  unsigned int i = 1;
-  for (MRG_REAL tout = dtout; true; tout += dtout, ++i) {
-    realtype t1;
+  MRG_REAL tout = dtout;
+  for (uint64_t i = 1; true; ++i) {
+    realtype t1 = tout;
     N_Vector Y1 = y0;
 
-    CVode(cv_ode_mem, tout, Y1, &t1, CV_NORMAL);
-    // t.push_back(t1);
+    const uint64_t period_number = i / time_steps;
+    const uint64_t period_location = i % time_steps;
+    if (!cache_on || period_number <= REFERENCE_PERIOD) {
+      CVode(cv_ode_mem, tout, Y1, &t1, CV_NORMAL);
+    }
 
     // debug
     const MRG_MATRIX_REAL & V_e = get_Ve(t1);
-    printf("Iteration %d: t = %e ms, V_e = %e mV\n", i, t1, V_e(N_nodes / 2, 0));
+    printf("Timestep %lu: t = %e (%e) ms, V_e = %e mV\n", i, tout, t1, V_e(N_nodes / 2, 0));
+
+    bool use_cache = false;
+    if (cache_on) {
+      if (period_number == REFERENCE_PERIOD) {
+        MRG_MATRIX_REAL & cache = m_cache.at(period_location);
+        cache.set_size(N_nodes, 1);
+        for (int j = 0; j < N_nodes; ++j) {
+          cache(j, 0) = NV_DATA_S(Y1)[j];
+        }
+      }
+      use_cache = (period_number >= REFERENCE_PERIOD);
+    }
 
     RingBuffer<MRG_MATRIX_REAL>::pointer Y = m_data_buffer.get_write_pointer();
     Y->set_size(N_nodes, 1);
-    for (int j = 0; j < N_nodes; ++j) {
-      (*Y)(j, 0) = NV_DATA_S(Y1)[j];
+    if (use_cache) {
+      *Y = m_cache[period_location];
+    } else {
+      for (int j = 0; j < N_nodes; ++j) {
+        (*Y)(j, 0) = NV_DATA_S(Y1)[j];
+      }
     }
+
+    tout += dtout;
   }
 
   CVodeFree(&cv_ode_mem);
