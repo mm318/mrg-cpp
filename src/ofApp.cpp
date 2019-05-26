@@ -6,10 +6,17 @@ static constexpr int MID_DATA_POINT = NUM_DATA_POINTS / 2;
 static constexpr MRG_REAL VREST_DEVIATION = 30;
 
 
-ofApp::ofApp(MRG & neuron_model)
+ofApp::ofApp(MRG & neuron_model, const std::string & video_name, int width, int height)
   : ofBaseApp(),
     m_neuron_model(neuron_model),
-    m_data(neuron_model.get_num_nodes())
+    m_data(neuron_model.get_num_nodes()),
+#if _ENABLE_VIDEO_RECORDING
+    m_video_name(video_name),
+    m_file_extension(".avi"), // ffmpeg uses the extension to determine the container type.
+                              // run 'ffmpeg -formats' to see supported formats
+#endif
+    m_width(width),
+    m_height(height)
 {
   int i = 0;
 
@@ -32,15 +39,74 @@ ofApp::ofApp(MRG & neuron_model)
 //--------------------------------------------------------------
 void ofApp::setup()
 {
-  ofSetWindowTitle("Axon Node Voltages");
-  ofBackground(40, 40, 40);
   ofSetVerticalSync(true);
+  ofSetFrameRate(m_fps);
+
+  // ofSetWindowTitle("Axon Node Voltages");
+  // ofSetWindowShape(m_width, m_height);
   ofSetCircleResolution(256);
+  ofBackground(40, 40, 40);
+  ofEnableAlphaBlending();
+
+#if _ENABLE_VIDEO_RECORDING
+  if (!m_video_name.empty()) {
+    assert(!m_vid_recorder.isInitialized());
+
+    ofAddListener(m_vid_recorder.outputFileCompleteEvent, this, &ofApp::recordingComplete);
+
+    // override the default codecs if you like
+    // run 'ffmpeg -codecs' to find out what your implementation supports
+    // (or -formats on some older versions)
+    m_vid_recorder.setVideoCodec("h264");
+    m_vid_recorder.setVideoBitrate("2000k");
+    m_vid_recorder.setAudioCodec("mp3");
+    m_vid_recorder.setAudioBitrate("128k");
+    m_vid_recorder.setPixelFormat("bgra");
+    m_vid_recorder.setup(m_video_name + '-' + ofGetTimestampString() + m_file_extension,
+                         m_width, m_height, m_fps);
+
+    // Start recording
+    m_vid_recorder.start();
+  }
+#endif
+}
+
+//--------------------------------------------------------------
+void ofApp::exit()
+{
+#if _ENABLE_VIDEO_RECORDING
+  m_vid_recorder.close();
+#endif
 }
 
 //--------------------------------------------------------------
 void ofApp::update()
 {
+#if _ENABLE_VIDEO_RECORDING
+  if (m_vid_recorder.isRecording()) {
+    ofImage img;
+    img.grabScreen(0, 0, ofGetWidth(), ofGetHeight());
+    bool success = m_vid_recorder.addFrame(img.getPixels());
+    if (!success) {
+      ofLogWarning("This frame was not added!");
+    }
+
+    // Check if the video recorder encountered any error while writing video frame or audio smaples.
+    if (m_vid_recorder.hasVideoError()) {
+      ofLogWarning("The video recorder failed to write some frames!");
+    }
+
+    // if (m_vid_recorder.hasAudioError()) {
+    //   ofLogWarning("The video recorder failed to write some audio samples!");
+    // }
+
+    // debug
+    // static thread_local int frame_count = 0;
+    // img.save(std::string("debug_frame_") + std::to_string(frame_count) + ".png");
+    // ++frame_count;
+  }
+#endif
+
   // Compute and get the latest data
   RingBuffer<MRG_MATRIX_REAL>::pointer data = m_neuron_model.try_get_next_data();
   if (data == nullptr) {
@@ -61,8 +127,8 @@ void ofApp::update()
 //--------------------------------------------------------------
 void ofApp::draw()
 {
-  int width = ofGetWindowWidth();
-  int height = ofGetWindowHeight();
+  const int width = ofGetWidth();
+  const int height = ofGetHeight();
 
   ofBackgroundGradient(ofColor(40), ofColor(0), OF_GRADIENT_CIRCULAR);
   ofEnableAlphaBlending();
@@ -176,4 +242,10 @@ void ofApp::gotMessage(ofMessage msg)
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo)
 {
+}
+
+//--------------------------------------------------------------
+void ofApp::recordingComplete(ofxVideoRecorderOutputFileCompleteEventArgs & args)
+{
+  std::cout << "The recoded video file is now complete." << std::endl;
 }

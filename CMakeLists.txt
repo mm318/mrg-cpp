@@ -29,6 +29,7 @@ set( ${APP_NAME}_SOURCE_FILES
 # ------------------------ AddOns  -----------------------
 set( OFX_ADDONS_ACTIVE
          ofxPoco
+         ofxVideoRecorder
 #        ofxXmlSettings
 #        ofxOsc
 #        ofxGui
@@ -65,5 +66,6 @@ target_link_libraries(${APP_NAME}
                         sundials_sunlinsoldense_static
                         sundials_sunmatrixdense_static
                         sundials_nvecserial_static
+                        ofxVideoRecorder
                         )
 # =========================================================================

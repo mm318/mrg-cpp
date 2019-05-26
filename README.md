@@ -27,6 +27,7 @@ Visualization (implemented using openFrameworks) is also addded.
     $ tar xvjf libs/libPoco-1.9.0.tar.bz2 -C openFrameworks-0.10.1/addons/ofxPoco/
 
     $ git clone https://github.com/mm318/ofxCMake.git openFrameworks-0.10.1/addons/ofxCMake
+    $ git clone https://github.com/timscaffidi/ofxVideoRecorder.git openFrameworks-0.10.1/addons/ofxVideoRecorder
     ```
 
 - Build like an usual CMake project, for example:
@@ -42,7 +43,7 @@ Visualization (implemented using openFrameworks) is also addded.
 ## Usage
 
 ```
-mrg_axon_model <axon file> <V_fe (mV)> <V_applied (mV)> <duration (ms)> <stim start (ms)> <stim end (ms)>
+mrg_axon_model [--record-video=<video name>] <axon file> <V_fe (mV)> <V_applied (mV)> <duration (ms)> <stim start (ms)> <stim end (ms)>
 ```
 
 The axon file is in the format (tab separated): `<x (m)> <y (m)> <z (m)> <Ve_pulse (V)>`
@@ -50,7 +51,7 @@ The axon file is in the format (tab separated): `<x (m)> <y (m)> <z (m)> <Ve_pul
 ### Example
 
 ```bash
-mrg_axon_model reference/activateF.txt 1 3 3 2 2.5
+mrg_axon_model reference/activateF.txt --record-video=replay 1 3 3 2 2.5
 ```
 
 
