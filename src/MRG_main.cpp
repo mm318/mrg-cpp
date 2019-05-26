@@ -148,7 +148,7 @@ int main(int argc, char ** argv)
   ofCreateWindow(settings);
   // this kicks off the running of my app can be OF_WINDOW or OF_FULLSCREEN pass in width and height too:
   // ofSetupOpenGL(WINDOW_WIDTH, WINDOW_HEIGHT, OF_WINDOW);  // <-------- setup the GL context
-  ofRunApp(new ofApp(neuron_model, video_name, WINDOW_WIDTH, WINDOW_HEIGHT));
+  ofRunApp(new ofApp(neuron_model, video_name));
 
   return 0;
 }

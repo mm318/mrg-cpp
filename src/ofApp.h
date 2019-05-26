@@ -14,8 +14,7 @@
 class ofApp : public ofBaseApp
 {
 public:
-  ofApp(MRG & neuron_model, const std::string & filename = "",
-        int width = 1024, int height = 768);
+  ofApp(MRG & neuron_model, const std::string & filename = "");
 
   void setup() override;
   void update() override;
@@ -48,7 +47,5 @@ private:
   std::string      m_video_name;
   std::string      m_file_extension;
 #endif
-  const int        m_width;
-  const int        m_height;
   static constexpr int m_fps = 30;
 };

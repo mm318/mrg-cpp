@@ -6,17 +6,16 @@ static constexpr int MID_DATA_POINT = NUM_DATA_POINTS / 2;
 static constexpr MRG_REAL VREST_DEVIATION = 30;
 
 
-ofApp::ofApp(MRG & neuron_model, const std::string & video_name, int width, int height)
+ofApp::ofApp(MRG & neuron_model, const std::string & video_name)
   : ofBaseApp(),
     m_neuron_model(neuron_model),
-    m_data(neuron_model.get_num_nodes()),
+    m_data(neuron_model.get_num_nodes())
 #if _ENABLE_VIDEO_RECORDING
+    ,
     m_video_name(video_name),
-    m_file_extension(".avi"), // ffmpeg uses the extension to determine the container type.
+    m_file_extension(".avi")  // ffmpeg uses the extension to determine the container type.
                               // run 'ffmpeg -formats' to see supported formats
 #endif
-    m_width(width),
-    m_height(height)
 {
   int i = 0;
 
@@ -42,8 +41,6 @@ void ofApp::setup()
   ofSetVerticalSync(true);
   ofSetFrameRate(m_fps);
 
-  // ofSetWindowTitle("Axon Node Voltages");
-  // ofSetWindowShape(m_width, m_height);
   ofSetCircleResolution(256);
   ofBackground(40, 40, 40);
   ofEnableAlphaBlending();
@@ -63,7 +60,7 @@ void ofApp::setup()
     m_vid_recorder.setAudioBitrate("128k");
     m_vid_recorder.setPixelFormat("bgra");
     m_vid_recorder.setup(m_video_name + '-' + ofGetTimestampString() + m_file_extension,
-                         m_width, m_height, m_fps);
+                         ofGetWidth(), ofGetHeight(), m_fps);
 
     // Start recording
     m_vid_recorder.start();
@@ -82,10 +79,29 @@ void ofApp::exit()
 //--------------------------------------------------------------
 void ofApp::update()
 {
+  // Compute and get the latest data
+  RingBuffer<MRG_MATRIX_REAL>::pointer data = m_neuron_model.try_get_next_data();
+  if (data == nullptr) {
+    return;
+  }
+
+  // insert the latest data at the head of the array.
+  int i = 0;
+  for (auto iter = m_data.begin(); iter != m_data.end(); ++iter, ++i) {
+    iter->push_back((*data)(i, 0));
+    iter->pop_front();
+  }
+
+  // debug
+  // printf("v_rest: %f, m_data[%lu]: %f\n", get_vrest(), m_data.size() / 2, m_data[m_data.size() / 2].back());
+
 #if _ENABLE_VIDEO_RECORDING
   if (m_vid_recorder.isRecording()) {
+    const int width = ofGetWidth();
+    const int height = ofGetHeight();
+
     ofImage img;
-    img.grabScreen(0, 0, ofGetWidth(), ofGetHeight());
+    img.grabScreen(0, 0, width, height);
     bool success = m_vid_recorder.addFrame(img.getPixels());
     if (!success) {
       ofLogWarning("This frame was not added!");
@@ -106,22 +122,6 @@ void ofApp::update()
     // ++frame_count;
   }
 #endif
-
-  // Compute and get the latest data
-  RingBuffer<MRG_MATRIX_REAL>::pointer data = m_neuron_model.try_get_next_data();
-  if (data == nullptr) {
-    return;
-  }
-
-  // insert the latest data at the head of the array.
-  int i = 0;
-  for (auto iter = m_data.begin(); iter != m_data.end(); ++iter, ++i) {
-    iter->push_back((*data)(i, 0));
-    iter->pop_front();
-  }
-
-  // debug
-  // printf("v_rest: %f, m_data[%lu]: %f\n", get_vrest(), m_data.size() / 2, m_data[m_data.size() / 2].back());
 }
 
 //--------------------------------------------------------------
