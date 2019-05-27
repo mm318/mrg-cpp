@@ -22,20 +22,25 @@ using Poco::Util::Option;
 using Poco::Util::OptionSet;
 using Poco::Util::OptionProcessor;
 
+static constexpr int WINDOW_HEIGHT = 768;
+static constexpr int WINDOW_WIDTH = 1024;
+
 
 void print_usage(const char * app_name)
 {
-  printf("%s [--help] [--cache-off] <axon-file> <V_fe> <V_applied> <period> <stim-start> <stim-end> [time-steps]\n", app_name);
+  printf("%s [--help] [--cache-off] [--record-video=video_name] <axon-file> <V_fe> <V_applied> "
+         "<period> <stim-start> <stim-end> [time-steps]\n", app_name);
 
-  puts("    [--help]      print this usage help message");
-  puts("    [--cache-off] calculate the model for every period");
-  puts("    <axon file>   tab separated values file describing the axon (see reference)");
-  puts("    <V_fe>        background voltage (mV)");
-  puts("    <V_applied>   voltage being applied by stimulus (mV)");
-  puts("    <period>      periodic duration of applied stimulus (ms)");
-  puts("    <stim start>  start time within period of applied stimulus (ms)");
-  puts("    <stim end>    end time within period of applied stimulus (ms)");
-  puts("    [time-steps]  number of time steps in a period (aka time resolution)\n");
+  puts("    [--help]         print this usage help message");
+  puts("    [--cache-off]    calculate the model for every period");
+  puts("    [--record-video] record animation to video");
+  puts("    <axon file>      tab separated values file describing the axon (see reference)");
+  puts("    <V_fe>           background voltage (mV)");
+  puts("    <V_applied>      voltage being applied by stimulus (mV)");
+  puts("    <period>         periodic duration of applied stimulus (ms)");
+  puts("    <stim start>     start time within period of applied stimulus (ms)");
+  puts("    <stim end>       end time within period of applied stimulus (ms)");
+  puts("    [time-steps]     number of time steps in a period (aka time resolution)\n");
 }
 
 int main(int argc, char ** argv)
@@ -47,12 +52,14 @@ int main(int argc, char ** argv)
   OptionSet opt_set;
   opt_set.addOption(Option("help", "h"));
   opt_set.addOption(Option("cache-off", "c"));
+  opt_set.addOption(Option("record-video", "r").argument("video_name"));
 
   OptionProcessor opt_processor(opt_set);
   opt_processor.setUnixStyle(true);
 
   int arg_pos = 0;
-  const char * axon_file_path = nullptr;
+  std::string axon_file_path;
+  std::string video_name;
   MRG_REAL V_fe = 0.0;
   MRG_REAL V_applied = 0.0;
   MRG_REAL period = 0.0;
@@ -70,6 +77,8 @@ int main(int argc, char ** argv)
         return 0;
       } else if (opt_name == "cache-off") {
         cache_on = false;
+      } else if (opt_name == "record-video") {
+        video_name = std::move(opt_arg);
       }
     } else {
       char * endptr = nullptr;
@@ -125,13 +134,21 @@ int main(int argc, char ** argv)
     time_steps = std::max(static_cast<unsigned int>(100 * period), 100u);
   }
 
+  ofDisableDataPath();
+
   // instantiate a neuron model
-  MRG neuron_model(axon_file_path);
+  MRG neuron_model(axon_file_path.c_str());
   std::thread t(&MRG::run, &neuron_model, V_fe, V_applied, period, stim_start, stim_end, time_steps, cache_on);
 
+  ofGLFWWindowSettings settings;
+  settings.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+  settings.resizable = false;
+  settings.title = "Axon Node Voltages";
+  settings.windowMode = OF_WINDOW;
+  ofCreateWindow(settings);
   // this kicks off the running of my app can be OF_WINDOW or OF_FULLSCREEN pass in width and height too:
-  ofSetupOpenGL(1024, 768, OF_WINDOW);  // <-------- setup the GL context
-  ofRunApp(new ofApp(neuron_model));
+  // ofSetupOpenGL(WINDOW_WIDTH, WINDOW_HEIGHT, OF_WINDOW);  // <-------- setup the GL context
+  ofRunApp(new ofApp(neuron_model, video_name));
 
   return 0;
 }
