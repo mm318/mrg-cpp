@@ -24,26 +24,9 @@ public:
     pointer(RingBuffer * buffer, bool read) : m_buffer(buffer), m_read(read)
     {
       // should already be locked, ideally assert here that it is already locked
-      // std::lock(*get_mutex(), m_buffer->m_idx_mutex)
-
-      size_t * idx = get_index();
-      m_data = &m_buffer->m_buffer[*idx];
-
-      // read/write indices updated before/during the process of reading/writing
-      ++(*idx);
-      if (*idx == m_buffer->m_buffer.size()) {
-        *idx = 0;
-      }
-
-      if (m_buffer->m_read_idx == m_buffer->m_write_idx) {
-        if (m_read) {
-          m_buffer->m_empty = true;
-        } else {
-          m_buffer->m_empty = false;
-        }
-      }
-
-      m_buffer->m_idx_mutex.unlock();
+      // std::lock(*get_rw_mutex(), m_buffer->m_idx_mutex)
+      m_data = &m_buffer->m_buffer[get_index()];
+      get_idx_mutex().unlock();
     }
 
     pointer(pointer && other)
@@ -64,8 +47,25 @@ public:
     ~pointer()
     {
       if (nullptr != m_buffer) {
-        get_mutex()->unlock();
-        get_condition_variable()->notify_one();
+        {
+          std::lock_guard<std::recursive_mutex> lock(get_idx_mutex());
+
+          size_t & idx = get_index();
+          ++idx;
+          if (idx == m_buffer->m_buffer.size()) {
+            idx = 0;
+          }
+
+          if (m_buffer->m_read_idx == m_buffer->m_write_idx) {
+            if (m_read) {
+              m_buffer->m_empty = true;
+            } else {
+              m_buffer->m_empty = false;
+            }
+          }
+        }
+        get_rw_mutex().unlock();
+        get_condition_variable().notify_all();
       }
     }
 
@@ -94,19 +94,24 @@ public:
     pointer(const pointer &) = delete;
     pointer & operator=(const pointer &) = delete;
 
-    std::mutex * get_mutex() const
+    std::recursive_mutex & get_idx_mutex() const
     {
-      return (m_read) ? &m_buffer->m_read_mutex : &m_buffer->m_write_mutex;
+      return m_buffer->m_idx_mutex;
     }
 
-    std::condition_variable_any * get_condition_variable() const
+    std::mutex & get_rw_mutex() const
     {
-      return (m_read) ? &m_buffer->m_not_full : &m_buffer->m_not_empty;
+      return (m_read) ? m_buffer->m_read_mutex : m_buffer->m_write_mutex;
     }
 
-    size_t * get_index() const
+    std::condition_variable_any & get_condition_variable() const
     {
-      return (m_read) ? &m_buffer->m_read_idx : &m_buffer->m_write_idx;
+      return (m_read) ? m_buffer->m_not_full : m_buffer->m_not_empty;
+    }
+
+    size_t & get_index() const
+    {
+      return (m_read) ? m_buffer->m_read_idx : m_buffer->m_write_idx;
     }
 
     RingBuffer * m_buffer;
@@ -130,8 +135,7 @@ public:
 
   pointer try_get_write_pointer()
   {
-    scoped_lock lock(this, false);
-
+    RingBufferScopedLock lock(this, false);
     if (full()) {
       return pointer();
     } else {
@@ -142,8 +146,7 @@ public:
 
   pointer try_get_read_pointer()
   {
-    scoped_lock lock(this, true);
-
+    RingBufferScopedLock lock(this, true);
     if (empty()) {
       return pointer();
     } else {
@@ -154,37 +157,33 @@ public:
 
   pointer get_write_pointer()
   {
-    scoped_lock lock(this, false);
-
+    RingBufferScopedLock lock(this, false);
     m_not_full.wait(lock, [this]() { return !this->full(); });
-
     lock.release();
     return pointer(this, false);
   }
 
   pointer get_read_pointer()
   {
-    scoped_lock lock(this, true);
-
+    RingBufferScopedLock lock(this, true);
     m_not_empty.wait(lock, [this]() { return !this->empty(); });
-
     lock.release();
     return pointer(this, true);
   }
 
 private:
-  friend class scoped_lock;
+  friend class RingBufferScopedLock;
   friend class pointer;
 
-  class scoped_lock
+  class RingBufferScopedLock
   {
   public:
-    scoped_lock(RingBuffer * buffer, bool read) : m_buffer(buffer), m_read(read)
+    RingBufferScopedLock(RingBuffer * buffer, bool read) : m_buffer(buffer), m_read(read)
     {
       lock();
     }
 
-    ~scoped_lock()
+    ~RingBufferScopedLock()
     {
       unlock();
     }
@@ -192,15 +191,15 @@ private:
     void lock()
     {
       if (nullptr != m_buffer) {
-        std::lock(get_mutex(), m_buffer->m_idx_mutex);
+        std::lock(get_idx_mutex(), get_rw_mutex());
       }
     }
 
     void unlock()
     {
       if (nullptr != m_buffer) {
-        m_buffer->m_idx_mutex.unlock();
-        get_mutex().unlock();
+        get_idx_mutex().unlock();
+        get_rw_mutex().unlock();
       }
     }
 
@@ -210,7 +209,12 @@ private:
     }
 
   private:
-    std::mutex & get_mutex() const
+    std::recursive_mutex & get_idx_mutex() const
+    {
+      return m_buffer->m_idx_mutex;
+    }
+
+    std::mutex & get_rw_mutex() const
     {
       return (m_read) ? m_buffer->m_read_mutex : m_buffer->m_write_mutex;
     }
