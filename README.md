@@ -54,6 +54,8 @@ The axon file is in the format (tab separated): `<x (m)> <y (m)> <z (m)> <Ve_pul
 mrg_axon_model reference/activateF.txt --record-video=replay 1 3 3 2 2.5
 ```
 
+![Example visualization](reference/example_screenshot.png "Example visualization")
+
 
 ## History
 
