@@ -40,7 +40,11 @@ set(${APP_NAME}_SOURCE_FILES
 find_package(PkgConfig) 
 pkg_check_modules(GLIB REQUIRED glib-2.0) 
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+pkg_check_modules(GSTREAMER_APP REQUIRED gstreamer-app-1.0)
+pkg_check_modules(GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0)
 pkg_check_modules(CAIRO REQUIRED cairo)
+
+add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
 
 ExternalProject_Add(armadillo
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/external_libs/armadillo-9.200.5"
@@ -98,16 +102,22 @@ target_link_libraries(${APP_NAME}
     glut
     glfw
     openal
-    libPocoUtil.a
-    libPocoFoundation.a
+    sndfile
+    kiss
+    tess2
+    PocoUtil
+    PocoFoundation
     fontconfig
     freetype
     freeimage
     X11
     ${GSTREAMER_LIBRARIES}
+    ${GSTREAMER_APP_LIBRARIES}
+    ${GSTREAMER_VIDEO_LIBRARIES}
     ${CAIRO_LIBRARIES}
     ${GLIB_LIBRARIES}
     uriparser
+    curl
     boost_filesystem
     boost_system
     pthread

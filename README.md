@@ -11,7 +11,7 @@ Visualization (implemented using openFrameworks) is also addded.
 
 ```bash
 git clone https://github.com/mm318/mrg-cpp.git
-cd mrg-cpp
+cd mrg-cpp/
 ```
 
 - Setup openFrameworks 0.11.2 and its CMake build:
@@ -29,7 +29,7 @@ sudo external_libs/of_v0.11.2_linux64gcc6_release/scripts/linux/ubuntu/install_d
     
 ```bash
 mkdir build
-cd build
+cd build/
 cmake ..
 make -j4
 ```
@@ -38,7 +38,7 @@ make -j4
 ## Usage
 
 ```
-mrg_axon_model [--record-video=<video name>] <axon file> <V_fe (mV)> <V_applied (mV)> <duration (ms)> <stim start (ms)> <stim end (ms)>
+mrg_axon_model <axon file> <V_fe (mV)> <V_applied (mV)> <duration (ms)> <stim start (ms)> <stim end (ms)>
 ```
 
 The axon file is in the format (tab separated): `<x (m)> <y (m)> <z (m)> <Ve_pulse (V)>`
@@ -46,7 +46,8 @@ The axon file is in the format (tab separated): `<x (m)> <y (m)> <z (m)> <Ve_pul
 ### Example
 
 ```bash
-mrg_axon_model reference/activateF.txt --record-video=replay 1 3 3 2 2.5
+cd build/bin/
+./mrg_axon_model activateF.txt 1 3 3 2 2.5
 ```
 
 ![Example visualization](reference/example_screenshot.png "Example visualization")

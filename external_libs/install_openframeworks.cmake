@@ -1,8 +1,12 @@
+cmake_minimum_required(VERSION 3.6)
+
 include(GNUInstallDirs)
 
 file(GLOB_RECURSE of_libs
      LIST_DIRECTORIES false
      ${SRC_PREFIX}/*.a)
+
+list(FILTER of_libs EXCLUDE REGEX "/emscripten/")
 
 file(GLOB_RECURSE of_includes
      LIST_DIRECTORIES false
