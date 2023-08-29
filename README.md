@@ -9,35 +9,30 @@ Visualization (implemented using openFrameworks) is also addded.
 
 - Obtain the source:
 
-    ```bash
-    $ git clone https://github.com/mm318/mrg-cpp.git
-    $ cd mrg-cpp
-    ```
+```bash
+git clone https://github.com/mm318/mrg-cpp.git
+cd mrg-cpp
+```
 
-- Setup openFrameworks 0.10.1 and its CMake build:
+- Setup openFrameworks 0.11.2 and its CMake build:
 
-    ```bash
-    $ wget https://github.com/openframeworks/openFrameworks/archive/0.10.1.tar.gz && tar xvzf 0.10.1.tar.gz && rm 0.10.1.tar.gz
+```bash
+wget https://github.com/openframeworks/openFrameworks/releases/download/0.11.2/of_v0.11.2_linux64gcc6_release.tar.gz \
+    && tar xvzf of_v0.11.2_linux64gcc6_release.tar.gz -C external_libs/ \
+    && rm of_v0.11.2_linux64gcc6_release.tar.gz
 
-    # optional if dependencies are already installed
-    $ sudo openFrameworks-0.10.1/scripts/linux/ubuntu/install_dependencies.sh
-
-    $ openFrameworks-0.10.1/scripts/linux/download_libs.sh
-    $ rm -rf openFrameworks-0.10.1/addons/ofxPoco/libs/
-    $ tar xvjf libs/libPoco-1.9.0.tar.bz2 -C openFrameworks-0.10.1/addons/ofxPoco/
-
-    $ git clone https://github.com/mm318/ofxCMake.git openFrameworks-0.10.1/addons/ofxCMake
-    $ git clone https://github.com/timscaffidi/ofxVideoRecorder.git openFrameworks-0.10.1/addons/ofxVideoRecorder
-    ```
+# optional if dependencies are already installed
+sudo external_libs/of_v0.11.2_linux64gcc6_release/scripts/linux/ubuntu/install_dependencies.sh
+```
 
 - Build like an usual CMake project, for example:
     
-    ```bash
-    $ mkdir build
-    $ cd build
-    $ cmake ..
-    $ make -j4
-    ```
+```bash
+mkdir build
+cd build
+cmake ..
+make -j4
+```
 
 
 ## Usage
