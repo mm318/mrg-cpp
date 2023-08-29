@@ -8,7 +8,7 @@
 typedef realtype            MRG_REAL;
 typedef arma::Mat<MRG_REAL> MRG_MATRIX_REAL;
 
-#include "utils.h"
+#include "utils/utils.h"
 
 
 class MRG

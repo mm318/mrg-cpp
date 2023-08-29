@@ -3,7 +3,7 @@
 #include <thread>
 
 #include "MRG.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 #include <nvector/nvector_serial.h>
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
