@@ -47,7 +47,7 @@ pkg_check_modules(CAIRO REQUIRED cairo)
 add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
 
 ExternalProject_Add(armadillo
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/external_libs/armadillo-9.200.5"
+    URL "${CMAKE_SOURCE_DIR}/external_libs/armadillo-9.200.5.tar.bz2"
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>
