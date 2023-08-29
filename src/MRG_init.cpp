@@ -3,7 +3,7 @@
 #include <fstream>
 
 #include "MRG.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 #include <nvector/nvector_serial.h>
 #include <cvode/cvode.h>

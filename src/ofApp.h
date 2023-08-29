@@ -1,14 +1,16 @@
 #pragma once
 
+#define _ENABLE_VIDEO_RECORDING (0)
+
 #include <vector>
 #include <list>
 
 #include "ofMain.h"
+#if _ENABLE_VIDEO_RECORDING
 #include "ofxVideoRecorder.h"
+#endif
 
 #include "MRG.h"
-
-#define _ENABLE_VIDEO_RECORDING (1)
 
 
 class ofApp : public ofBaseApp
@@ -37,15 +39,16 @@ public:
 private:
   MRG_REAL get_vrest() const { return m_neuron_model.get_Vrest(); }
 
-  void recordingComplete(ofxVideoRecorderOutputFileCompleteEventArgs & args);
-
   MRG & m_neuron_model;
   std::vector<std::list<MRG_REAL>> m_data;
 
 #if _ENABLE_VIDEO_RECORDING
+  void recordingComplete(ofxVideoRecorderOutputFileCompleteEventArgs & args);
+
   ofxVideoRecorder m_vid_recorder;
   std::string      m_video_name;
   std::string      m_file_extension;
 #endif
+
   static constexpr int m_fps = 30;
 };

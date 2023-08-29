@@ -1,71 +1,137 @@
-# ======================= ofxCMake Vers. 0.1 =============
-#  PUT THIS FILE INTO YOUR OPENFRAMEWORKS PROJECT FOLDER
-
 # ========================================================
 # ===================== CMake Settings ===================
 # ========================================================
-cmake_minimum_required( VERSION 3.3 )
-project( openframeworks )
+cmake_minimum_required(VERSION 3.3)
+
+include(ExternalProject)
+include(GNUInstallDirs)
+include(ProcessorCount)
+
+ProcessorCount(NUM_CPUS)
+if(NUM_CPUS EQUAL 0)
+    set(NUM_CPUS 1)
+endif()
 
 # ========================================================
 # ===================== User Settings ====================
 # ========================================================
-# ------------------------ OF Path -----------------------
-# --- If outside the OF structure, set an absolute OF path
-set( OF_DIRECTORY_BY_USER "${CMAKE_CURRENT_LIST_DIR}/openFrameworks-0.10.1" )
+
+project(mrg-cpp)
 
 # ---------------------- App name  -----------------------
-set( APP_NAME mrg_axon_model )
+set(APP_NAME mrg_axon_model)
 
 # --------------------- Source Files ---------------------
-set( ${APP_NAME}_SOURCE_FILES
-        src/MRG_main.cpp
-        src/MRG_init.cpp
-        src/MRG_ode.cpp
-        src/utils.cpp
-        src/ofApp.cpp
-        )
+set(${APP_NAME}_SOURCE_FILES
+    src/MRG_main.cpp
+    src/MRG_init.cpp
+    src/MRG_ode.cpp
+    src/ofApp.cpp
+    src/utils/utils.cpp
+)
 
-# ------------------------ AddOns  -----------------------
-set( OFX_ADDONS_ACTIVE
-         ofxPoco
-         ofxVideoRecorder
-#        ofxXmlSettings
-#        ofxOsc
-#        ofxGui
-#        ofxNetwork
-#        ofxVectorGraphics
-#        ofxThreadedImageLoader
-#        ofxAssimpModelLoader
-#        ofxKinect
-#        ofxOpenCv
-#        ofxSvg
-#        ofxEmscripten (untested)
-        )
+# ========================================================
 
-# =========================================================================
-# ============================== OpenFrameworks ===========================
-# =========================================================================
-include( ${OF_DIRECTORY_BY_USER}/addons/ofxCMake/modules/main.cmake )
-# =========================================================================
 
-# =========================================================================
-# ============================== Armadillo ================================
-# =========================================================================
-target_include_directories(${APP_NAME} PRIVATE src/libs/armadillo-9.200.5)
-# =========================================================================
+# ===============================================================
+# ==================== External Dependencies ====================
+# ===============================================================
 
-# =========================================================================
-# ============================== SUNDIALS =================================
-# =========================================================================
-add_subdirectory(src/libs/sundials-4.0.0 "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/sundials")
-target_include_directories(${APP_NAME} PRIVATE ${sundials_SOURCE_DIR}/include)
+find_package(PkgConfig) 
+pkg_check_modules(GLIB REQUIRED glib-2.0) 
+pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+pkg_check_modules(GSTREAMER_APP REQUIRED gstreamer-app-1.0)
+pkg_check_modules(GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0)
+pkg_check_modules(CAIRO REQUIRED cairo)
+
+add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
+
+ExternalProject_Add(armadillo
+    URL "${CMAKE_SOURCE_DIR}/external_libs/armadillo-9.200.5.tar.bz2"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>
+                    "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_INCLUDEDIR}"
+)
+
+ExternalProject_Add(sundials
+    URL "${CMAKE_SOURCE_DIR}/external_libs/sundials-4.0.2.tar.gz"
+    CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
+)
+
+ExternalProject_Add(openframeworks
+    URL "${CMAKE_SOURCE_DIR}/external_libs/of_v0.11.2_linux64gcc6_release"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND <SOURCE_DIR>/scripts/linux/compileOF.sh -j${NUM_CPUS}
+    BUILD_IN_SOURCE 1
+    INSTALL_COMMAND ${CMAKE_COMMAND}
+                    -DSRC_PREFIX=<SOURCE_DIR>
+                    -DDST_PREFIX=${CMAKE_BINARY_DIR}
+                    -P ${CMAKE_SOURCE_DIR}/external_libs/install_openframeworks.cmake
+)
+
+link_directories("${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+
+# ===============================================================
+
+
+# =======================================================
+# ==================== Build Project ====================
+# =======================================================
+
+add_executable(${APP_NAME}
+    ${${APP_NAME}_SOURCE_FILES}
+)
+
+target_include_directories(${APP_NAME} BEFORE
+    PRIVATE "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_INCLUDEDIR}"
+            ${GLIB_INCLUDE_DIRS}
+            ${GSTREAMER_INCLUDE_DIRS}
+            ${CAIRO_INCLUDE_DIRS}
+)
+
 target_link_libraries(${APP_NAME}
-                        ofxPoco
-                        sundials_cvode_static
-                        sundials_sunlinsoldense_static
-                        sundials_sunmatrixdense_static
-                        sundials_nvecserial_static
-                        ofxVideoRecorder
-                        )
-# =========================================================================
+    libsundials_cvode.a
+    libsundials_sunlinsoldense.a
+    libsundials_sunmatrixdense.a
+    libsundials_nvecserial.a
+    libopenFrameworks.a
+    GLEW
+    GLU
+    GL
+    glut
+    glfw
+    openal
+    sndfile
+    kiss
+    tess2
+    PocoUtil
+    PocoFoundation
+    fontconfig
+    freetype
+    freeimage
+    X11
+    ${GSTREAMER_LIBRARIES}
+    ${GSTREAMER_APP_LIBRARIES}
+    ${GSTREAMER_VIDEO_LIBRARIES}
+    ${CAIRO_LIBRARIES}
+    ${GLIB_LIBRARIES}
+    uriparser
+    curl
+    boost_filesystem
+    boost_system
+    pthread
+)
+
+add_dependencies(${APP_NAME} armadillo sundials openframeworks)
+
+set_target_properties(${APP_NAME}
+    PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+file(COPY reference/activateF.txt DESTINATION bin/)
+
+# =======================================================

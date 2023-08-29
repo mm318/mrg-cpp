@@ -244,8 +244,10 @@ void ofApp::dragEvent(ofDragInfo dragInfo)
 {
 }
 
+#if _ENABLE_VIDEO_RECORDING
 //--------------------------------------------------------------
 void ofApp::recordingComplete(ofxVideoRecorderOutputFileCompleteEventArgs & args)
 {
   std::cout << "The recoded video file is now complete." << std::endl;
 }
+#endif
